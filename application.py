@@ -3,32 +3,49 @@ import networkx as nx
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import traceback
 
 class CityGraph:
-    def __init__(self, place_name):
-        self.place_name = place_name
+    def __init__(self, graphml_filepath):
+        self.graphml_filepath = graphml_filepath
         self.graph = self.load_graph()
 
     def load_graph(self):
-        # Descargar datos de la ciudad
-        graph = ox.graph_from_place(self.place_name, network_type='drive')
-        return graph
+        # Cargar el grafo desde un archivo GraphML
+        try:
+            graph = ox.load_graphml(filepath=self.graphml_filepath)
+            return graph
+        except Exception as e:
+            print(f"Error al cargar el grafo: {e}")
+            traceback.print_exc()
 
     def get_nearest_node(self, point):
         # Encuentra el nodo más cercano a un punto (lat, lon)
-        return ox.distance.nearest_nodes(self.graph, point[1], point[0])
+        try:
+            return ox.distance.nearest_nodes(self.graph, point[1], point[0])
+        except Exception as e:
+            print(f"Error al encontrar el nodo más cercano: {e}")
+            traceback.print_exc()
 
     def find_shortest_route(self, orig_point, dest_point):
         # Encuentra la ruta más corta entre dos puntos
-        orig_node = self.get_nearest_node(orig_point)
-        dest_node = self.get_nearest_node(dest_point)
-        shortest_path = nx.shortest_path(self.graph, orig_node, dest_node, weight='length')
-        return shortest_path
+        try:
+            orig_node = self.get_nearest_node(orig_point)
+            dest_node = self.get_nearest_node(dest_point)
+            shortest_path = nx.dijkstra_path(self.graph, orig_node, dest_node, weight='length')
+            return shortest_path
+        except Exception as e:
+            print(f"Error al encontrar la ruta más corta: {e}")
+            traceback.print_exc()
 
     def plot_route(self, route):
         # Visualiza la ruta en el grafo
-        fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k')
-        return fig, ax
+        try:
+            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k')
+            return fig, ax
+        except Exception as e:
+            print(f"Error al visualizar la ruta: {e}")
+            traceback.print_exc()
 
 class CityMapApp:
     def __init__(self, master, city_graph):
@@ -71,11 +88,14 @@ class CityMapApp:
             self.canvas.draw()
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error al calcular o visualizar la ruta: {e}")
+            traceback.print_exc()
 
 # Ejemplo de uso:
 if __name__ == "__main__":
-    city_graph = CityGraph("Cochabamba, Bolivia")
+    graphml_filepath = 'grafo_cocha.graphml'  # Cambia esto por la ruta a tu archivo GraphML
+
+    city_graph = CityGraph(graphml_filepath)
 
     root = tk.Tk()
     app = CityMapApp(root, city_graph)
