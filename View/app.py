@@ -3,7 +3,7 @@ from tkinter import colorchooser
 import customtkinter as ctk
 import tkinter as tk
 from PIL import ImageTk, Image
-from View.controller import Controller
+from controller import Controller
 
 ctk.set_appearance_mode("System")
 
