@@ -1,9 +1,8 @@
 import math
 import tkinter
-
+import Model
 import customtkinter as ctk
 from PIL import Image, ImageTk
-
 from Model.GrafoNoDirigido import GrafoNoDirigido
 from Model.ManagerFile import ManagerFile
 from Algorithms import astar, buscar_nodo_en_grafoBFS, bidirectional_search
