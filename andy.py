@@ -139,9 +139,9 @@ class CityMapApp:
         self.return_route_button = ttk.Button(self.top_frame, text="Camino de Vuelta", command=self.find_return_route)
         self.return_route_button.grid(row=1, column=2, pady=5, padx=5)
 
-        # Área de texto de solo lectura para la distancia de la ruta
-        self.route_distance_text = tk.Text(self.top_frame, height=2, width=40, state='disabled')
-        self.route_distance_text.grid(row=0, column=3, rowspan=2, padx=10, pady=5)
+        # Área de texto para mostrar el registro de mensajes
+        self.log_text = tk.Text(self.top_frame, height=4, width=110, state='disabled')
+        self.log_text.grid(row=0, column=6, padx=5)
 
         # Inicializar el canvas con el grafo completo
         self.canvas = None
@@ -169,7 +169,23 @@ class CityMapApp:
 
             # Calcular la distancia de la ruta
             distance = self.city_graph.calculate_route_distance(route)
-            self.update_route_distance_text(f"Distancia total: {distance:.2f} metros")
+            time = (distance / 160)
+            total = time if time % 1 < 0.6 else time + 1 - 0.6
+            cost = 10
+            if(distance >= 2000):
+                cost = 12
+                if(distance >= 3000):
+                    cost = 15
+                    if(distance >= 4000):
+                        cost = 20
+            self.log_message("Paciente toma un Taxi de ida")
+            self.log_message(f"Ruta desde {start_name} hasta {end_name}: {total:.2f} minutos y el costo de {cost} Bs")
+            self.log_message("Paciente Llega a la recepción y pide una cita")
+            doc = 20
+            self.log_message(f"Doctor atiende a Paciente unos {doc} minutos")
+            price = 50
+            self.log_message(f"Paciente paga la consulta {price} Bs en la recepcion")
+
 
             # Visualizar la ruta
             fig, ax = self.city_graph.plot_route(route)
@@ -195,7 +211,17 @@ class CityMapApp:
 
             # Calcular la distancia de la ruta de vuelta
             distance = self.city_graph.calculate_route_distance(route)
-            self.update_route_distance_text(f"Distancia total: {distance:.2f} metros")
+            time = (distance / 160)
+            total = time if time % 1 < 0.6 else time + 1 - 0.6
+            cost = 10
+            if(distance >= 2000):
+                cost = 12
+                if(distance >= 3000):
+                    cost = 15
+                    if(distance >= 4000):
+                        cost = 20
+            self.log_message("Paciente retorna a casa en un Taxi")
+            self.log_message(f"Ruta desde {end_name} hasta {start_name}: {total:.2f} minutos y el costo de {cost} Bs")
 
             # Visualizar la ruta de vuelta
             fig, ax = self.city_graph.plot_route(route)
@@ -216,6 +242,10 @@ class CityMapApp:
         self.route_distance_text.insert(tk.END, text)
         self.route_distance_text.config(state='disabled')
 
+    def log_message(self, message):
+        self.log_text.config(state='normal')
+        self.log_text.insert(tk.END, message + "\n")
+        self.log_text.config(state='disabled')
 # Ejemplo de uso:
 if __name__ == "__main__":
     graphml_filepath = 'mapa_limitado.graphml'  # Cambia esto por la ruta a tu archivo GraphML
@@ -223,11 +253,11 @@ if __name__ == "__main__":
 
     hospitals = {
         "Clinica los Olivos": (-17.38955,-66.17980), 
-        "SSU": (-17.38795,-66.14802),
+        "SSU": (-17.38792,-66.14876),
         "Hospital Viedma": (-17.38566,-66.14865),
         "Clinica Univalle": (-17.37205,-66.16075),
-        "Clinica los Angeles": (-17.37859,-66.16472),
-        "CORDES": (-17.37859,-66.16472)
+        "Clinica los Angeles": (-17.37872,-66.16479),
+        "CORDES": (-17.37650,-66.16295)
     }  # Reemplaza lat1, lon1, etc., con las coordenadas de los hospitales
 
     houses = {
