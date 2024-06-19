@@ -38,10 +38,19 @@ class CityGraph:
             print(f"Error al encontrar la ruta más corta: {e}")
             traceback.print_exc()
 
+    def plot_graph(self):
+        # Visualiza el grafo completo
+        try:
+            fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0)
+            return fig, ax
+        except Exception as e:
+            print(f"Error al visualizar el grafo: {e}")
+            traceback.print_exc()
+
     def plot_route(self, route):
         # Visualiza la ruta en el grafo
         try:
-            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k')
+            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k', show=False, close=False)
             return fig, ax
         except Exception as e:
             print(f"Error al visualizar la ruta: {e}")
@@ -53,21 +62,40 @@ class CityMapApp:
         self.master.title("City Map Route Finder")
         self.city_graph = city_graph
 
-        # Interfaz de usuario
-        self.start_label = ttk.Label(master, text="Punto de Inicio (lat, lon):")
-        self.start_label.grid(row=0, column=0)
-        self.start_entry = ttk.Entry(master)
-        self.start_entry.grid(row=0, column=1)
+        # Crear marcos para dividir la interfaz
+        self.left_frame = tk.Frame(master, width=300)
+        self.left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-        self.end_label = ttk.Label(master, text="Punto de Destino (lat, lon):")
-        self.end_label.grid(row=1, column=0)
-        self.end_entry = ttk.Entry(master)
-        self.end_entry.grid(row=1, column=1)
+        self.right_frame = tk.Frame(master)
+        self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        self.find_route_button = ttk.Button(master, text="Encontrar Ruta", command=self.find_route)
-        self.find_route_button.grid(row=2, column=0, columnspan=2)
+        # Controles de entrada del usuario
+        self.start_label = ttk.Label(self.left_frame, text="Punto de Inicio (lat, lon):")
+        self.start_label.grid(row=0, column=0, pady=5)
+        self.start_entry = ttk.Entry(self.left_frame)
+        self.start_entry.grid(row=0, column=1, pady=5)
 
+        self.end_label = ttk.Label(self.left_frame, text="Punto de Destino (lat, lon):")
+        self.end_label.grid(row=1, column=0, pady=5)
+        self.end_entry = ttk.Entry(self.left_frame)
+        self.end_entry.grid(row=1, column=1, pady=5)
+
+        self.find_route_button = ttk.Button(self.left_frame, text="Encontrar Ruta", command=self.find_route)
+        self.find_route_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+        # Inicializar el canvas con el grafo completo
         self.canvas = None
+        self.load_initial_graph()
+
+    def load_initial_graph(self):
+        try:
+            fig, ax = self.city_graph.plot_graph()
+            self.canvas = FigureCanvasTkAgg(fig, master=self.right_frame)
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+            self.canvas.draw()
+        except Exception as e:
+            print(f"Error al cargar el grafo inicial: {e}")
+            traceback.print_exc()
 
     def find_route(self):
         # Obtener puntos de inicio y destino
@@ -83,8 +111,8 @@ class CityMapApp:
             if self.canvas:
                 self.canvas.get_tk_widget().destroy()
 
-            self.canvas = FigureCanvasTkAgg(fig, master=self.master)
-            self.canvas.get_tk_widget().grid(row=3, column=0, columnspan=2)
+            self.canvas = FigureCanvasTkAgg(fig, master=self.right_frame)
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
 
         except Exception as e:
@@ -98,5 +126,8 @@ if __name__ == "__main__":
     city_graph = CityGraph(graphml_filepath)
 
     root = tk.Tk()
+    #root.attributes('-fullscreen', True)  # Iniciar en pantalla completa
+    root.resizable(False, False)  # Deshabilitar cambiar el tamaño de la ventana
+
     app = CityMapApp(root, city_graph)
     root.mainloop()
