@@ -3,14 +3,20 @@ import networkx as nx
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
 import matplotlib.pyplot as plt
 import traceback
 from PIL import Image, ImageTk
 import matplotlib.image as mpimg
 
+# Cambiar el backend de matplotlib a TkAgg
+matplotlib.use('TkAgg')
+
 class CityGraph:
     def __init__(self, graphml_filepath, hospitals, houses, background_image_path):
         self.graphml_filepath = graphml_filepath
+        self.hospitals = hospitals
+        self.houses = houses
         self.locations = {**hospitals, **houses}
         self.background_image_path = background_image_path
         self.graph = self.load_graph()
@@ -48,16 +54,16 @@ class CityGraph:
     def plot_graph(self):
         # Visualiza el grafo completo con hospitales y casas y una imagen de fondo
         try:
-            fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0, figsize=(11, 7), bgcolor='none', edge_color='black')
+            fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0, figsize=(11, 7), bgcolor='none', edge_color='gray')
             img = mpimg.imread(self.background_image_path)
             ax.imshow(img, extent=ax.get_xlim() + ax.get_ylim(), aspect='auto')
 
-            hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in hospitals]
-            hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in hospitals]
-            house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in houses]
-            house_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in houses]
-            ax.scatter(hospital_xs, hospital_ys, s=100, c='red', marker='^', label='Hospitals')
-            ax.scatter(house_xs, house_ys, s=100, c='blue', marker='o', label='Houses')
+            hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in self.hospitals]
+            hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.hospitals]
+            house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in self.houses]
+            house_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.houses]
+            ax.scatter(hospital_xs, hospital_ys, s=100, c='red', marker='^', label='Hospitales o clinicas')
+            ax.scatter(house_xs, house_ys, s=100, c='blue', marker='o', label='Casas')
             ax.legend()
             fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)  # Ajustar márgenes
             return fig, ax
@@ -72,10 +78,10 @@ class CityGraph:
             img = mpimg.imread(self.background_image_path)
             ax.imshow(img, extent=ax.get_xlim() + ax.get_ylim(), aspect='auto')
 
-            hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in hospitals]
-            hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in hospitals]
-            house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in houses]
-            house_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in houses]
+            hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in self.hospitals]
+            hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.hospitals]
+            house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in self.houses]
+            house_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.houses]
             ax.scatter(hospital_xs, hospital_ys, s=100, c='red', marker='^', label='Hospitals')
             ax.scatter(house_xs, house_ys, s=100, c='blue', marker='o', label='Houses')
             ax.legend()
@@ -83,6 +89,16 @@ class CityGraph:
             return fig, ax
         except Exception as e:
             print(f"Error al visualizar la ruta: {e}")
+            traceback.print_exc()
+
+    def find_shortest_route(self, start_name, end_name):
+        try:
+            start_node = self.location_nodes[start_name]
+            end_node = self.location_nodes[end_name]
+            route = nx.shortest_path(self.graph, start_node, end_node, weight='length')
+            return route
+        except Exception as e:
+            print(f"Error al encontrar la ruta más corta: {e}")
             traceback.print_exc()
 
 class CityMapApp:
@@ -101,16 +117,19 @@ class CityMapApp:
         # Controles de entrada del usuario
         self.start_label = ttk.Label(self.top_frame, text="Punto de Inicio:")
         self.start_label.grid(row=0, column=0, pady=5)
-        self.start_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.location_nodes.keys()))
+        self.start_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.houses.keys()))
         self.start_combobox.grid(row=0, column=1, pady=5)
 
         self.end_label = ttk.Label(self.top_frame, text="Punto de Destino:")
         self.end_label.grid(row=1, column=0, pady=5)
-        self.end_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.location_nodes.keys()))
+        self.end_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.hospitals.keys()))
         self.end_combobox.grid(row=1, column=1, pady=5)
 
         self.find_route_button = ttk.Button(self.top_frame, text="Encontrar Ruta", command=self.find_route)
         self.find_route_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+        self.return_route_button = ttk.Button(self.top_frame, text="Camino de Vuelta", command=self.find_return_route)
+        self.return_route_button.grid(row=3, column=0, columnspan=2, pady=5)
 
         # Inicializar el canvas con el grafo completo
         self.canvas = None
@@ -147,6 +166,28 @@ class CityMapApp:
 
         except Exception as e:
             print(f"Error al calcular o visualizar la ruta: {e}")
+            traceback.print_exc()
+
+    def find_return_route(self):
+        # Obtener los nombres de inicio y destino para el camino de vuelta
+        try:
+            start_name = self.start_combobox.get()
+            end_name = self.end_combobox.get()
+
+            # Encontrar la ruta de vuelta (desde el destino al inicio)
+            route = self.city_graph.find_shortest_route(end_name, start_name)
+
+            # Visualizar la ruta de vuelta
+            fig, ax = self.city_graph.plot_route(route)
+            if self.canvas:
+                self.canvas.get_tk_widget().destroy()
+
+            self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_frame)
+            self.canvas.get_tk_widget().place(relwidth=1, relheight=1)  # Ajustar el gráfico al tamaño del fondo
+            self.canvas.draw()
+
+        except Exception as e:
+            print(f"Error al calcular o visualizar la ruta de vuelta: {e}")
             traceback.print_exc()
 
 # Ejemplo de uso:
