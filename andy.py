@@ -6,11 +6,13 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import traceback
 from PIL import Image, ImageTk
+import matplotlib.image as mpimg
 
 class CityGraph:
-    def __init__(self, graphml_filepath, hospitals, houses):
+    def __init__(self, graphml_filepath, hospitals, houses, background_image_path):
         self.graphml_filepath = graphml_filepath
         self.locations = {**hospitals, **houses}
+        self.background_image_path = background_image_path
         self.graph = self.load_graph()
         self.location_nodes = self.get_location_nodes()
 
@@ -43,21 +45,13 @@ class CityGraph:
             print(f"Error al encontrar el nodo más cercano: {e}")
             traceback.print_exc()
 
-    def find_shortest_route(self, orig_name, dest_name):
-        # Encuentra la ruta más corta entre dos ubicaciones por nombre
-        try:
-            orig_node = self.location_nodes[orig_name]
-            dest_node = self.location_nodes[dest_name]
-            shortest_path = nx.dijkstra_path(self.graph, orig_node, dest_node, weight='length')
-            return shortest_path
-        except Exception as e:
-            print(f"Error al encontrar la ruta más corta: {e}")
-            traceback.print_exc()
-
     def plot_graph(self):
-        # Visualiza el grafo completo con hospitales y casas
+        # Visualiza el grafo completo con hospitales y casas y una imagen de fondo
         try:
             fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0, figsize=(11, 7), bgcolor='none', edge_color='black')
+            img = mpimg.imread(self.background_image_path)
+            ax.imshow(img, extent=ax.get_xlim() + ax.get_ylim(), aspect='auto')
+
             hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in hospitals]
             hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in hospitals]
             house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in houses]
@@ -72,9 +66,12 @@ class CityGraph:
             traceback.print_exc()
 
     def plot_route(self, route):
-        # Visualiza la ruta en el grafo con hospitales y casas
+        # Visualiza la ruta en el grafo con hospitales y casas y una imagen de fondo
         try:
             fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='none', edge_color='black', show=False, close=False, figsize=(12, 8))
+            img = mpimg.imread(self.background_image_path)
+            ax.imshow(img, extent=ax.get_xlim() + ax.get_ylim(), aspect='auto')
+
             hospital_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in hospitals]
             hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in hospitals]
             house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in houses]
@@ -118,13 +115,6 @@ class CityMapApp:
         # Inicializar el canvas con el grafo completo
         self.canvas = None
 
-        # Cargar y mostrar la imagen de fondo
-        self.background_image = Image.open("2.jpeg")  # Cambia esto por la ruta a tu imagen
-        self.background_photo = ImageTk.PhotoImage(self.background_image)
-
-        self.background_label = tk.Label(self.bottom_frame, image=self.background_photo)
-        self.background_label.place(relwidth=1, relheight=1)
-
         self.load_initial_graph()
 
     def load_initial_graph(self):
@@ -162,6 +152,7 @@ class CityMapApp:
 # Ejemplo de uso:
 if __name__ == "__main__":
     graphml_filepath = 'mapa_limitado.graphml'  # Cambia esto por la ruta a tu archivo GraphML
+    background_image_path = '2.jpeg'  # Cambia esto por la ruta a tu imagen de fondo
 
     hospitals = {
         "Clinica los Olivos": (-17.38955,-66.17980), 
@@ -178,7 +169,7 @@ if __name__ == "__main__":
         "CasaSucre": (-17.39269,-66.14787)
     }  # Reemplaza lat6, lon6, etc., con las coordenadas de las casas
 
-    city_graph = CityGraph(graphml_filepath, hospitals, houses)
+    city_graph = CityGraph(graphml_filepath, hospitals, houses, background_image_path)
 
     root = tk.Tk()
 
