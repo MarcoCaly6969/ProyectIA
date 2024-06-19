@@ -164,17 +164,18 @@ if __name__ == "__main__":
     graphml_filepath = 'mapa_limitado.graphml'  # Cambia esto por la ruta a tu archivo GraphML
 
     hospitals = {
-        "Hospital 1": (-17.38955,-66.17980), 
-        "Hospital 2": (-17.38795,-66.14802),
-        "Hospital 3": (-17.38566,-66.14865),
-        "Hospital 4": (-17.37205,-66.16075),
-        "Hospital 5": (-17.37859,-66.16472)
+        "Clinica los Olivos": (-17.38955,-66.17980), 
+        "SSU": (-17.38795,-66.14802),
+        "Hospital Viedma": (-17.38566,-66.14865),
+        "Clinica Univalle": (-17.37205,-66.16075),
+        "Clinica los Angeles": (-17.37859,-66.16472),
+        "CORDES": (-17.37859,-66.16472)
     }  # Reemplaza lat1, lon1, etc., con las coordenadas de los hospitales
 
     houses = {
-        "Casa 1": (-17.39248,-66.15938),
-        "Casa 2": (-17.387175,-66.175565),
-        "Casa 3": (-17.39269,-66.14787)
+        "CasaA": (-17.39248,-66.15938),
+        "CasaB": (-17.387175,-66.175565),
+        "CasaSucre": (-17.39269,-66.14787)
     }  # Reemplaza lat6, lon6, etc., con las coordenadas de las casas
 
     city_graph = CityGraph(graphml_filepath, hospitals, houses)
