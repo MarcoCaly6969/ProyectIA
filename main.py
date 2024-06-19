@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import traceback
 from PIL import Image, ImageTk
 import matplotlib.image as mpimg
-
+import random
 # Cambiar el backend de matplotlib a TkAgg
 matplotlib.use('TkAgg')
 
@@ -181,9 +181,9 @@ class CityMapApp:
             self.log_message("Paciente toma un Taxi de ida")
             self.log_message(f"Ruta desde {start_name} hasta {end_name}: {total:.2f} minutos y el costo de {cost} Bs")
             self.log_message("Paciente Llega a la recepción y pide una cita")
-            doc = 20
+            doc = random.randint(20, 40)
             self.log_message(f"Doctor atiende a Paciente unos {doc} minutos")
-            price = 50
+            price = 80
             self.log_message(f"Paciente paga la consulta {price} Bs en la recepcion")
 
 
