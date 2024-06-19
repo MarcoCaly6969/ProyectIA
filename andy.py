@@ -3,6 +3,7 @@ import networkx as nx
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 import traceback
 
 class CityGraph:
@@ -41,7 +42,8 @@ class CityGraph:
     def plot_graph(self):
         # Visualiza el grafo completo
         try:
-            fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0)
+            fig, ax = ox.plot_graph(self.graph, show=False, close=False, node_size=0, figsize=(11, 7))
+            fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)  # Ajustar márgenes
             return fig, ax
         except Exception as e:
             print(f"Error al visualizar el grafo: {e}")
@@ -50,7 +52,8 @@ class CityGraph:
     def plot_route(self, route):
         # Visualiza la ruta en el grafo
         try:
-            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k', show=False, close=False)
+            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='k', show=False, close=False, figsize=(12, 8))
+            fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)  # Ajustar márgenes
             return fig, ax
         except Exception as e:
             print(f"Error al visualizar la ruta: {e}")
@@ -63,24 +66,24 @@ class CityMapApp:
         self.city_graph = city_graph
 
         # Crear marcos para dividir la interfaz
-        self.left_frame = tk.Frame(master, width=300)
-        self.left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+        self.top_frame = tk.Frame(master, height=int(master.winfo_screenheight() * 0.15))
+        self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-        self.right_frame = tk.Frame(master)
-        self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.bottom_frame = tk.Frame(master)
+        self.bottom_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=0, pady=0)  # Asegurar que no haya padding
 
         # Controles de entrada del usuario
-        self.start_label = ttk.Label(self.left_frame, text="Punto de Inicio (lat, lon):")
+        self.start_label = ttk.Label(self.top_frame, text="Punto de Inicio (lat, lon):")
         self.start_label.grid(row=0, column=0, pady=5)
-        self.start_entry = ttk.Entry(self.left_frame)
+        self.start_entry = ttk.Entry(self.top_frame)
         self.start_entry.grid(row=0, column=1, pady=5)
 
-        self.end_label = ttk.Label(self.left_frame, text="Punto de Destino (lat, lon):")
+        self.end_label = ttk.Label(self.top_frame, text="Punto de Destino (lat, lon):")
         self.end_label.grid(row=1, column=0, pady=5)
-        self.end_entry = ttk.Entry(self.left_frame)
+        self.end_entry = ttk.Entry(self.top_frame)
         self.end_entry.grid(row=1, column=1, pady=5)
 
-        self.find_route_button = ttk.Button(self.left_frame, text="Encontrar Ruta", command=self.find_route)
+        self.find_route_button = ttk.Button(self.top_frame, text="Encontrar Ruta", command=self.find_route)
         self.find_route_button.grid(row=2, column=0, columnspan=2, pady=5)
 
         # Inicializar el canvas con el grafo completo
@@ -90,7 +93,7 @@ class CityMapApp:
     def load_initial_graph(self):
         try:
             fig, ax = self.city_graph.plot_graph()
-            self.canvas = FigureCanvasTkAgg(fig, master=self.right_frame)
+            self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_frame)
             self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
         except Exception as e:
@@ -111,7 +114,7 @@ class CityMapApp:
             if self.canvas:
                 self.canvas.get_tk_widget().destroy()
 
-            self.canvas = FigureCanvasTkAgg(fig, master=self.right_frame)
+            self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_frame)
             self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
 
@@ -126,8 +129,6 @@ if __name__ == "__main__":
     city_graph = CityGraph(graphml_filepath)
 
     root = tk.Tk()
-    #root.attributes('-fullscreen', True)  # Iniciar en pantalla completa
-    root.resizable(False, False)  # Deshabilitar cambiar el tamaño de la ventana
 
     app = CityMapApp(root, city_graph)
     root.mainloop()
