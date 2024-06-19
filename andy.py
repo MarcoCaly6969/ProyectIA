@@ -74,7 +74,7 @@ class CityGraph:
     def plot_route(self, route):
         # Visualiza la ruta en el grafo con hospitales y casas y una imagen de fondo
         try:
-            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='none', edge_color='black', show=False, close=False, figsize=(12, 8))
+            fig, ax = ox.plot_graph_route(self.graph, route, route_linewidth=6, node_size=0, bgcolor='none', edge_color='gray', show=False, close=False, figsize=(11, 7))
             img = mpimg.imread(self.background_image_path)
             ax.imshow(img, extent=ax.get_xlim() + ax.get_ylim(), aspect='auto')
 
@@ -82,8 +82,8 @@ class CityGraph:
             hospital_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.hospitals]
             house_xs = [self.graph.nodes[node]['x'] for name, node in self.location_nodes.items() if name in self.houses]
             house_ys = [self.graph.nodes[node]['y'] for name, node in self.location_nodes.items() if name in self.houses]
-            ax.scatter(hospital_xs, hospital_ys, s=100, c='red', marker='^', label='Hospitals')
-            ax.scatter(house_xs, house_ys, s=100, c='blue', marker='o', label='Houses')
+            ax.scatter(hospital_xs, hospital_ys, s=100, c='red', marker='^', label='Hospitales o clinicas')
+            ax.scatter(house_xs, house_ys, s=100, c='blue', marker='o', label='Casas')
             ax.legend()
             fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)  # Ajustar márgenes
             return fig, ax
@@ -99,6 +99,14 @@ class CityGraph:
             return route
         except Exception as e:
             print(f"Error al encontrar la ruta más corta: {e}")
+            traceback.print_exc()
+
+    def calculate_route_distance(self, route):
+        try:
+            distance = nx.shortest_path_length(self.graph, route[0], route[-1], weight='length')
+            return distance
+        except Exception as e:
+            print(f"Error al calcular la distancia de la ruta: {e}")
             traceback.print_exc()
 
 class CityMapApp:
@@ -120,16 +128,20 @@ class CityMapApp:
         self.start_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.houses.keys()))
         self.start_combobox.grid(row=0, column=1, pady=5)
 
+        self.find_route_button = ttk.Button(self.top_frame, text="Encontrar Ruta", command=self.find_route)
+        self.find_route_button.grid(row=0, column=2, pady=5, padx=5)
+
         self.end_label = ttk.Label(self.top_frame, text="Punto de Destino:")
         self.end_label.grid(row=1, column=0, pady=5)
         self.end_combobox = ttk.Combobox(self.top_frame, values=list(city_graph.hospitals.keys()))
         self.end_combobox.grid(row=1, column=1, pady=5)
 
-        self.find_route_button = ttk.Button(self.top_frame, text="Encontrar Ruta", command=self.find_route)
-        self.find_route_button.grid(row=2, column=0, columnspan=2, pady=5)
-
         self.return_route_button = ttk.Button(self.top_frame, text="Camino de Vuelta", command=self.find_return_route)
-        self.return_route_button.grid(row=3, column=0, columnspan=2, pady=5)
+        self.return_route_button.grid(row=1, column=2, pady=5, padx=5)
+
+        # Área de texto de solo lectura para la distancia de la ruta
+        self.route_distance_text = tk.Text(self.top_frame, height=2, width=40, state='disabled')
+        self.route_distance_text.grid(row=0, column=3, rowspan=2, padx=10, pady=5)
 
         # Inicializar el canvas con el grafo completo
         self.canvas = None
@@ -155,6 +167,10 @@ class CityMapApp:
             # Encontrar la ruta más corta
             route = self.city_graph.find_shortest_route(start_name, end_name)
 
+            # Calcular la distancia de la ruta
+            distance = self.city_graph.calculate_route_distance(route)
+            self.update_route_distance_text(f"Distancia total: {distance:.2f} metros")
+
             # Visualizar la ruta
             fig, ax = self.city_graph.plot_route(route)
             if self.canvas:
@@ -177,6 +193,10 @@ class CityMapApp:
             # Encontrar la ruta de vuelta (desde el destino al inicio)
             route = self.city_graph.find_shortest_route(end_name, start_name)
 
+            # Calcular la distancia de la ruta de vuelta
+            distance = self.city_graph.calculate_route_distance(route)
+            self.update_route_distance_text(f"Distancia total: {distance:.2f} metros")
+
             # Visualizar la ruta de vuelta
             fig, ax = self.city_graph.plot_route(route)
             if self.canvas:
@@ -189,6 +209,12 @@ class CityMapApp:
         except Exception as e:
             print(f"Error al calcular o visualizar la ruta de vuelta: {e}")
             traceback.print_exc()
+
+    def update_route_distance_text(self, text):
+        self.route_distance_text.config(state='normal')
+        self.route_distance_text.delete(1.0, tk.END)
+        self.route_distance_text.insert(tk.END, text)
+        self.route_distance_text.config(state='disabled')
 
 # Ejemplo de uso:
 if __name__ == "__main__":
